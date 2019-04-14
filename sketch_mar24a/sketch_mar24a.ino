@@ -1,7 +1,3 @@
-// Add options for background settings
-// TO DO: Clean up and comment code...
-// BUG: demo state should start as mode 0 after intro
-// NICE TO HAVE: When alarm is cancelled, the alarm still remains set for next day.
 
 //Add the following libraries to the respective folder for you operating system. See http://arduino.cc/en/Guide/Environment
 #include <FastLED.h> // FastSPI Library from http://code.google.com/p/fastspi/
@@ -13,13 +9,13 @@
 
 RTC_DS3231 RTC; // Establishes the chipset of the Real Time Clock
 
-#define LEDStripPin 6 // Pin used for the data to the LED strip
-#define menuPin 0 // Pin used for the menu button (green stripe)
+#define LEDStripPin 3 // Pin used for the data to the LED strip
+#define menuPin 8 // Pin used for the menu button (green stripe)
 #define numLEDs 60 // Number of LEDs in strip
 
 // Setting up the LED strip
 struct CRGB leds[numLEDs];
-Encoder rotary1(3, 4); // Setting up the Rotary Encoder
+Encoder rotary1(6, 5); // Setting up the Rotary Encoder
 
 DateTime old; // Variable to compare new and old time, to see if it has moved on.
 int rotary1Pos  = 0;
@@ -106,15 +102,23 @@ int LEDOffset = 30;
 
 void setup()
 {
+  if (! RTC.begin()) {
+  Serial.println("Couldn't find RTC");
+  while (1);
+  }
+  else 
+  { 
+    Serial.println("RTC Started");
+  }
   // Set up all pins
   pinMode(menuPin, INPUT_PULLUP);     // Uses the internal 20k pull up resistor. Pre Arduino_v.1.0.1 need to be "digitalWrite(menuPin,HIGH);pinMode(menuPin,INPUT);"
     
   // Start LEDs
-  LEDS.addLeds<WS2811, LEDStripPin, GRB>(leds, numLEDs); // Structure of the LED data. I have changed to from rgb to grb, as using an alternative LED strip. Test & change these if you're getting different colours. 
+  LEDS.addLeds<WS2812B, LEDStripPin, GRB>(leds, numLEDs); // Structure of the LED data. I have changed to from rgb to grb, as using an alternative LED strip. Test & change these if you're getting different colours. 
   
   // Start RTC
   Wire.begin(); // Starts the Wire library allows I2C communication to the Real Time Clock
-  RTC.begin(); // Starts communications to the RTC
+//  RTC.begin(); // Starts communications to the RTC
   
   Serial.begin(9600); // Starts the serial communications
 
@@ -163,7 +167,7 @@ void setup()
 void loop()
 {
   DateTime now = RTC.now(); // Fetches the time from RTC
-  
+
   // Check for any button presses and action accordingley
   menuButton = menuBouncer.update();  // Update the debouncer for the menu button and saves state to menuButton
   rotary1Pos = rotary1.read(); // Checks the rotary position
@@ -200,11 +204,11 @@ void loop()
         }
     } 
   // Set the time LED's
-  if (state == setClockHourState || state == setClockMinState || state == setClockSecState) {setClockDisplay(now);}
-  else if (state == alarmState || state == setAlarmHourState || state == setAlarmMinState) {setAlarmDisplay();}
-  else if (state == countDownState) {countDownDisplay(now);}
-  else if (state == demoState) {runDemo(now);}
-  else {timeDisplay(now);}
+  if (state == setClockHourState || state == setClockMinState || state == setClockSecState) {setClockDisplay(now); Serial.println("Clock State");}
+  else if (state == alarmState || state == setAlarmHourState || state == setAlarmMinState) {setAlarmDisplay(); Serial.println("Alarm State");}
+  else if (state == countDownState) {countDownDisplay(now);Serial.println("Countdown State");}
+  else if (state == demoState) {runDemo(now);Serial.println("Demo State");}
+  else {timeDisplay(now);Serial.println("Time Display State");}
 
   // Update LEDs
   LEDS.show();
@@ -577,47 +581,6 @@ void alarmDisplay() // Displays the alarm
           }
         break;
 
-// Currently not working        
-//      case 4:
-//        fadeTime = 60000;
-//        brightFadeRad = (millis() - alarmTrigTime)/fadeTime; // Divided by the time period of the fade up.
-//        LEDPosition = ((millis() - alarmTrigTime)/(fadeTime/30));
-////        if (millis() > alarmTrigTime + fadeTime) LEDBrightness = 255; // If the fade time is complete, then the LED brightness will be set to full.
-//        if (brightFadeRad <= 0) LEDBrightness = 0;
-//        else if (brightFadeRad >= 0) LEDBrightness = 1;
-//        else LEDBrightness = 255.0*(1.0+sin((1.57*brightFadeRad)-1.57));
-//        
-////        Serial.println(brightFadeRad);
-////        Serial.println(LEDBrightness);
-//        reverseLEDPosition = 60 - LEDPosition;
-//        if (LEDPosition >= 0 && LEDPosition <= 29)
-//          {
-//            for (int i = 0; i < LEDPosition; i++)
-//              {
-//                leds[i].r = LEDBrightness;
-//                leds[i].g = LEDBrightness;
-//                leds[i].b = LEDBrightness;
-//              }
-//          }
-//        if (reverseLEDPosition <= 59 && reverseLEDPosition >= 31)
-//          {
-//            for (int i = 59; i > reverseLEDPosition; i--)
-//              {
-//                leds[i].r = LEDBrightness;
-//                leds[i].g = LEDBrightness;
-//                leds[i].b = LEDBrightness;
-//              }              
-//          }
-//        if (LEDPosition >= 30)
-//          {
-//            for (int i = 0; i < numLEDs; i++)
-//              {
-//                leds[i].r = LEDBrightness;
-//                leds[i].g = LEDBrightness;
-//                leds[i].b = LEDBrightness;
-//              }           
-//          }  
-//        break;
     }
 }
 
